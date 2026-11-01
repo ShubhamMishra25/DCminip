@@ -1,0 +1,217 @@
+syntax = "proto3";
+
+package auction;
+
+// ─── Messages ────────────────────────────────────────────────────────────────
+
+// Authentication
+message RegisterRequest {
+  string username = 1;
+  string password = 2;
+  string role = 3; // "buyer" or "seller"
+}
+
+message RegisterResponse {
+  bool success = 1;
+  string message = 2;
+  string user_id = 3;
+}
+
+message LoginRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  bool success = 1;
+  string message = 2;
+  string token = 3;
+  string user_id = 4;
+  string role = 5;
+  string username = 6;
+}
+
+// Auction
+message CreateAuctionRequest {
+  string token = 1;
+  string item_name = 2;
+  string description = 3;
+  double starting_price = 4;
+  int32 duration_seconds = 5;
+}
+
+message CreateAuctionResponse {
+  bool success = 1;
+  string message = 2;
+  string auction_id = 3;
+}
+
+message GetActiveAuctionsRequest {
+  string token = 1;
+  string search_query = 2;
+}
+
+message AuctionItem {
+  string auction_id = 1;
+  string item_name = 2;
+  string description = 3;
+  double starting_price = 4;
+  double current_highest_bid = 5;
+  string highest_bidder = 6;
+  string seller_id = 7;
+  string seller_username = 8;
+  string status = 9;       // "active", "closed"
+  int64 end_time = 10;
+  int64 created_at = 11;
+  int32 total_bids = 12;
+}
+
+message GetActiveAuctionsResponse {
+  bool success = 1;
+  repeated AuctionItem auctions = 2;
+}
+
+message GetAuctionDetailRequest {
+  string token = 1;
+  string auction_id = 2;
+}
+
+message GetAuctionDetailResponse {
+  bool success = 1;
+  AuctionItem auction = 2;
+  string message = 3;
+}
+
+// Bidding
+message PlaceBidRequest {
+  string token = 1;
+  string auction_id = 2;
+  double bid_amount = 3;
+}
+
+message PlaceBidResponse {
+  bool success = 1;
+  string message = 2;
+  double current_highest_bid = 3;
+  string highest_bidder = 4;
+  string thread_id = 5;
+  string timestamp = 6;
+}
+
+message GetHighestBidRequest {
+  string token = 1;
+  string auction_id = 2;
+}
+
+message GetHighestBidResponse {
+  bool success = 1;
+  double highest_bid = 2;
+  string highest_bidder = 3;
+  string auction_id = 4;
+}
+
+message BidRecord {
+  string bid_id = 1;
+  string auction_id = 2;
+  string bidder_id = 3;
+  string bidder_username = 4;
+  double bid_amount = 5;
+  int64 timestamp = 6;
+  string thread_id = 7;
+  string item_name = 8;
+}
+
+message GetBidHistoryRequest {
+  string token = 1;
+  string auction_id = 2;
+}
+
+message GetBidHistoryResponse {
+  bool success = 1;
+  repeated BidRecord bids = 2;
+}
+
+message GetUserBidsRequest {
+  string token = 1;
+}
+
+message GetUserBidsResponse {
+  bool success = 1;
+  repeated BidRecord bids = 2;
+}
+
+// Close auction
+message CloseAuctionRequest {
+  string token = 1;
+  string auction_id = 2;
+}
+
+message CloseAuctionResponse {
+  bool success = 1;
+  string message = 2;
+  double final_price = 3;
+  string winner_username = 4;
+}
+
+// Seller auctions
+message GetSellerAuctionsRequest {
+  string token = 1;
+}
+
+message GetSellerAuctionsResponse {
+  bool success = 1;
+  repeated AuctionItem auctions = 2;
+}
+
+// Streaming bid updates
+message BidUpdateSubscription {
+  string token = 1;
+  string auction_id = 2;
+}
+
+message BidUpdate {
+  string auction_id = 1;
+  double new_highest_bid = 2;
+  string highest_bidder = 3;
+  int64 timestamp = 4;
+  int32 total_bids = 5;
+  string bidder_username = 6;
+}
+
+// Race condition demo
+message RaceConditionRequest {
+  int32 num_concurrent_bids = 1;
+  bool use_locks = 2;
+}
+
+message RaceConditionResponse {
+  bool success = 1;
+  string report = 2;
+  double expected_highest_bid = 3;
+  double actual_highest_bid = 4;
+  bool race_condition_detected = 5;
+  repeated string logs = 6;
+}
+
+// ─── Service ─────────────────────────────────────────────────────────────────
+
+service AuctionService {
+  // Unary RPCs
+  rpc RegisterUser(RegisterRequest) returns (RegisterResponse);
+  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc CreateAuction(CreateAuctionRequest) returns (CreateAuctionResponse);
+  rpc GetActiveAuctions(GetActiveAuctionsRequest) returns (GetActiveAuctionsResponse);
+  rpc GetAuctionDetail(GetAuctionDetailRequest) returns (GetAuctionDetailResponse);
+  rpc PlaceBid(PlaceBidRequest) returns (PlaceBidResponse);
+  rpc GetHighestBid(GetHighestBidRequest) returns (GetHighestBidResponse);
+  rpc GetBidHistory(GetBidHistoryRequest) returns (GetBidHistoryResponse);
+  rpc GetUserBids(GetUserBidsRequest) returns (GetUserBidsResponse);
+  rpc CloseAuction(CloseAuctionRequest) returns (CloseAuctionResponse);
+  rpc GetSellerAuctions(GetSellerAuctionsRequest) returns (GetSellerAuctionsResponse);
+
+  // Server streaming RPC for real-time bid updates
+  rpc SubscribeToBidUpdates(BidUpdateSubscription) returns (stream BidUpdate);
+
+  // Race condition demonstration RPCs
+  rpc DemoRaceCondition(RaceConditionRequest) returns (RaceConditionResponse);
+}

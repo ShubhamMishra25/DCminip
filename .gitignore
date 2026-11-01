@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+backend/.venv/
+.venv/
+venv/
+ENV/
+*.db
+*.sqlite3
+
+# Node / Frontend
+frontend/node_modules/
+node_modules/
+frontend/dist/
+dist/
+.npm
+*.log
+
+# Envoy / Logs
+*.log
+.system_generated/
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
